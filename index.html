@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050a08">
+  <title>_.Pax.ton._ | Geo Console</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #050a08;
+      color: #00ff9c;
+      font-family: monospace;
+      padding: 22px;
+    }
+
+    main {
+      max-width: 680px;
+      margin: 35px auto;
+    }
+
+    .panel {
+      border: 1px solid #00ff9c;
+      border-radius: 12px;
+      padding: 24px;
+      background: #09120f;
+      box-shadow: 0 0 22px #00ff9c18;
+    }
+
+    h1 {
+      font-size: clamp(25px, 6vw, 38px);
+      overflow-wrap: anywhere;
+      text-shadow: 0 0 12px #00ff9c80;
+    }
+
+    .muted { color: #91b7a7; line-height: 1.7; }
+
+    .status {
+      padding: 12px;
+      border: 1px dashed #326c54;
+      margin: 18px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .data {
+      background: #030705;
+      border: 1px solid #193b2c;
+      padding: 14px;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    button, .map-link {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      text-align: center;
+      background: #00ff9c;
+      color: #031109;
+      font: bold 15px monospace;
+      border: 0;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    .secondary {
+      background: transparent;
+      color: #00ff9c;
+      border: 1px solid #00ff9c;
+    }
+
+    footer {
+      margin-top: 22px;
+      font-size: 12px;
+      color: #78998a;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div class="panel">
+      <p>● PAX.TON // GEO CONSOLE v1.0</p>
+      <h1>LOCATION SYSTEM</h1>
+      <p class="muted">
+        Personal cyber console // Browser-based GPS
+      </p>
+
+      <div class="status" id="status" role="status"
+           aria-live="polite">
+        SYSTEM: STANDBY
+      </div>
+
+      <p class="muted">
+        This tool reads the location of the device being
+        used to open this page. Nothing is uploaded or saved.
+        You choose when to request your location.
+      </p>
+
+      <button id="locate">AUTHORIZE MY LOCATION</button>
+
+      <div class="data">
+        LATITUDE: <span id="lat">--</span>
+      </div>
+      <div class="data">
+        LONGITUDE: <span id="lon">--</span>
+      </div>
+      <div class="data">
+        ACCURACY: <span id="accuracy">--</span>
+      </div>
+      <div class="data">
+        UPDATED: <span id="updated">--</span>
+      </div>
+
+      <a id="map" class="map-link" hidden
+         target="_blank" rel="noopener noreferrer">
+        OPEN LOCATION ON MAP
+      </a>
+
+      <button id="clear" class="secondary">
+        CLEAR DISPLAY
+      </button>
+
+      <footer>
+        PAX.TON // PRIVACY FIRST<br>
+        Location access requires your permission.
+        This page does not track other people.
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    const status = document.getElementById("status");
+    const locate = document.getElementById("locate");
+    const map = document.getElementById("map");
+
+    locate.addEventListener("click", () => {
+      if (!navigator.geolocation) {
+        status.textContent =
+          "ERROR: Geolocation is not supported.";
+        return;
+      }
+
+      status.textContent =
+        "WAITING: Please respond to the browser permission prompt.";
+      locate.disabled = true;
+      map.hidden = true;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude, accuracy } =
+            position.coords;
+
+          document.getElementById("lat").textContent =
+            latitude.toFixed(6);
+
+          document.getElementById("lon").textContent =
+            longitude.toFixed(6);
+
+          document.getElementById("accuracy").textContent =
+            Math.round(accuracy) + " metres (estimated)";
+
+          document.getElementById("updated").textContent =
+            new Date(position.timestamp).toLocaleString();
+
+          map.href =
+            "https://www.openstreetmap.org/?mlat=" +
+            latitude + "&mlon=" + longitude +
+            "#map=16/" + latitude + "/" + longitude;
+
+          map.hidden = false;
+          status.textContent = "SUCCESS: Location received.";
+          locate.disabled = false;
+        },
+        (error) => {
+          const messages = {
+            1: "Permission denied. Check browser settings.",
+            2: "Location unavailable. Try again outdoors.",
+            3: "Request timed out. Please try again."
+          };
+
+          status.textContent =
+            "ERROR: " + (messages[error.code] ||
+            "Could not retrieve location.");
+
+          locate.disabled = false;
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      ["lat", "lon", "accuracy", "updated"].forEach(id => {
+        document.getElementById(id).textContent = "--";
+      });
+
+      map.hidden = true;
+      map.removeAttribute("href");
+      status.textContent = "SYSTEM: DISPLAY CLEARED.";
+    });
+  </script>
+</body>
+  </html>
